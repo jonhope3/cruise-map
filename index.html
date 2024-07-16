@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alaska Cruise Itinerary</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
     <link rel="icon" href="cruise.png" type="image/png">
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <style>
         html, body, #map {
             height: 100%;
@@ -14,9 +13,10 @@
             margin: 0;
             padding: 0;
         }
+
         .marker-label {
             background: white;
-            opacity: 70%;
+            opacity: 0.7;
             border: 1px solid #666;
             border-radius: 4px;
             padding: 4px;
@@ -24,17 +24,28 @@
             white-space: nowrap;
             text-align: center;
         }
-        .marker-label .port-name {
-            font-weight: bolder;
+
+        .marker-label .port-link {
+            color: black;
+            text-decoration: none;
         }
+
+        .marker-label .port-name {
+            font-weight: bold;
+        }
+
         .marker-label .arrival-date {
             font-size: 10px;
-            font-weight: bold;
+        }
+
+        .leaflet-control-attribution {
+            opacity: 0.5;
         }
     </style>
 </head>
 <body>
 <div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
     const portsOfCall = [
         {
@@ -42,57 +53,65 @@
             arrive: "July 29, 6:00 AM",
             depart: "July 22, 4:00 PM",
             lat: 47.6062,
-            lon: -122.3321
+            lon: -122.3321,
+            infoLink: "https://www.royalcaribbean.com/cruises/itinerary/7-night-alaska-adventure-from-seattle-on-quantum/QN07SEA-3836452734#step=2"
         },
         {
             name: "Ketchikan, Alaska",
             arrive: "July 24, 8:00 AM",
             depart: "July 24, 5:00 PM",
             lat: 55.342222,
-            lon: -131.646111
+            lon: -131.646111,
+            infoLink: "https://www.royalcaribbean.com/cruises/itinerary/7-night-alaska-adventure-from-seattle-on-quantum/QN07SEA-3836452734#step=4"
         },
         {
             name: "Sitka, Alaska",
             arrive: "July 25, 8:00 AM",
             depart: "July 25, 5:00 PM",
             lat: 57.053055,
-            lon: -135.330000
+            lon: -135.330000,
+            infoLink: "https://www.royalcaribbean.com/cruises/itinerary/7-night-alaska-adventure-from-seattle-on-quantum/QN07SEA-3836452734#step=5"
         },
         {
             name: "Endicott Arm & Dawes Glacier",
             arrive: "July 26, 5:00 AM",
             depart: "July 26, 10:00 AM",
-            lat: 57.655000,
-            lon: -133.027778
+            lat: 57.8316,
+            lon: -133.8547,
+            infoLink: "https://www.royalcaribbean.com/cruises/itinerary/7-night-alaska-adventure-from-seattle-on-quantum/QN07SEA-3836452734#step=6"
         },
         {
             name: "Juneau, Alaska",
             arrive: "July 26, 1:00 PM",
             depart: "July 26, 8:00 PM",
             lat: 58.301944,
-            lon: -134.419722
+            lon: -134.419722,
+            infoLink: "https://www.royalcaribbean.com/cruises/itinerary/7-night-alaska-adventure-from-seattle-on-quantum/QN07SEA-3836452734#step=7"
         },
         {
             name: "Victoria, British Columbia",
             arrive: "July 28, 5:00 PM",
             depart: "July 28, 10:00 PM",
             lat: 48.4222,
-            lon: -123.3700
+            lon: -123.3700,
+            infoLink: "https://www.royalcaribbean.com/cruises/itinerary/7-night-alaska-adventure-from-seattle-on-quantum/QN07SEA-3836452734#step=9"
         }
     ];
 
-    function calculateCenterPoint(ports) {
-        var totalLat = 0;
-        var totalLon = 0;
-        var count = ports.length;
-
-        ports.forEach(port => {
-            totalLat += port.lat;
-            totalLon += port.lon;
-        });
-
-        return [totalLat / count, totalLon / count];
-    }
+    const waypoints = [
+        // Seattle to Ketchikan
+        [[47.6062, -122.3321], [48.2320, -122.8986], [48.4584, -124.6069], [49.2893, -126.8536], [51.0621, -129.8035], [52.9288, -130.7922], [54.5593, -131.4624], [55.342222, -131.646111]],
+        // Ketchikan to Sitka
+        [[55.342222, -131.646111], [54.8133, -131.7480], [54.4509, -132.1326], [54.5912, -133.5608], [55.4664, -134.2310], [56.1088, -135.1538], [56.6623, -135.6152], [57.053055, -135.330000]],
+        // Sitka to Endicott Arm & Dawes Glacier
+        [[57.053055, -135.330000], [56.8069, -135.6702], [56.1761, -135.1758], [56.0352, -134.4617], [56.9090, -134.5166], [57.1839, -133.7146], [57.7804, -133.7805], [58.0, -134.0]],
+        // Endicott Arm & Dawes Glacier to Juneau
+        [[58.0, -134.0], [58.301944, -134.419722]],
+        // Juneau to Victoria
+        [[58.301944, -134.419722], [57.9207, -133.9124], [57.3443, -133.6816], [57.0348, -134.1650], [56.7467, -134.4836], [55.8013, -134.4287], [54.6230, -133.3521], [54.3229, -131.5723], [51.5087, -128.7378], [50.5763, -126.7822], [50.0360, -125.0354], [49.5609, -124.5520], [49.1889, -123.6182], [48.6910, -123.4094], [48.4222, -123.3700]],
+        // Victoria to Seattle
+        [[48.4222, -123.3700], [47.6062, -122.3321]]
+    ];
 
     function getLabelDimensions(content) {
         const tempDiv = document.createElement('div');
@@ -110,37 +129,62 @@
         return dimensions;
     }
 
-    let centerPoint = calculateCenterPoint(portsOfCall);
-    const map = L.map('map').setView(centerPoint, 6);
+    const map = L.map('map').setView([53.5, -130], 4);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const defaultTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+    });
 
-    // Define water routes manually
-    const waterRoutes = [
-        [[47.6062, -122.3321], [48.0, -123.0], [55.342222, -131.646111]], // Seattle to Ketchikan
-        [[55.342222, -131.646111], [56.0, -133.0], [57.053055, -135.330000]], // Ketchikan to Sitka
-        [[57.053055, -135.330000], [57.5, -134.0], [57.655000, -133.027778]], // Sitka to Endicott Arm & Dawes Glacier
-        [[57.655000, -133.027778], [58.0, -134.0], [58.301944, -134.419722]], // Endicott Arm & Dawes Glacier to Juneau
-        [[58.301944, -134.419722], [56.0, -132.0], [55.0, -131.0], [48.4222, -123.3700]], // Juneau to Victoria
-        [[48.4222, -123.3700], [47.6062, -122.3321]] // Victoria to Seattle
-    ];
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
 
-    // Draw water routes
-    waterRoutes.forEach(route => {
+    map.addLayer(defaultTileLayer);
+
+    const SATELLITE_VIEW_MIN = 11
+    const SATELLITE_VIEW_MAX = 15
+
+    map.on('zoomstart', function () {
+        if (map.getZoom() >= SATELLITE_VIEW_MIN && map.getZoom() <= SATELLITE_VIEW_MAX) {
+            map.removeLayer(defaultTileLayer);
+            map.addLayer(satelliteLayer);
+            changePolylineColor('white');
+        } else {
+            map.removeLayer(satelliteLayer);
+            map.addLayer(defaultTileLayer);
+            changePolylineColor('blue');
+        }
+    });
+
+    function changePolylineColor(color) {
+        map.eachLayer(function (layer) {
+            if (layer instanceof L.Polyline) {
+                layer.setStyle({
+                    color: color
+                });
+            }
+        });
+    }
+
+    waypoints.forEach(route => {
         L.polyline(route, {
             color: 'blue',
             weight: 2,
             dashArray: '5, 5',
-            opacity: 0.8
+            opacity: 0.8,
+            smoothFactor: 1.0  // Adjust this value to control the curvature
         }).addTo(map);
     });
 
     portsOfCall.forEach((port) => {
         let labelContent = `<div class="marker-label">
-            <div class="port-name">${port.name}</div>
-            <div class="arrival-date">${port.arrive.split(',')[0]}</div>
+            <a href="${port.infoLink}" target="_blank" class="port-link">
+                <div class="port-name">${port.name}</div>
+                <div class="arrival-date">
+                    <span>Arrive:</span> ${port.arrive}<br>
+                    <span>Depart:</span> ${port.depart}<br>
+                </div>
+            </a>
         </div>`;
 
         const labelDimensions = getLabelDimensions(labelContent);
@@ -152,26 +196,11 @@
             iconAnchor: [labelDimensions.width / 2, labelDimensions.height / 2 + 25]
         });
 
-        var marker = L.marker([port.lat, port.lon], {icon: label}).addTo(map);
-
-        var tooltipContent = `
-            <b>${port.name}</b><br>
-            Arrive: ${port.arrive}<br>
-            Depart: ${port.depart}
-        `;
-
-        marker.bindTooltip(tooltipContent, {
-            direction: 'bottom',
-            permanent: false,
-            sticky: true,
-            offset: [0, 0],
-            opacity: 0.9
-        });
+        L.marker([port.lat, port.lon], {icon: label}).addTo(map);
     });
 
-    var routeBounds = L.latLngBounds(waterRoutes.flat());
+    var routeBounds = L.latLngBounds(waypoints.flat());
     map.fitBounds(routeBounds);
-
 </script>
 </body>
 </html>
