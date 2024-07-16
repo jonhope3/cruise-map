@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alaska Cruise Itinerary</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="icon" href="cruise.png" type="image/png">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .marker-label {
+            background: white;
+            opacity: 70%;
+            border: 1px solid #666;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .marker-label .port-name {
+            font-weight: bolder;
+        }
+        .marker-label .arrival-date {
+            font-size: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    const portsOfCall = [
+        {
+            name: "Seattle, Washington",
+            arrive: "July 29, 6:00 AM",
+            depart: "July 22, 4:00 PM",
+            lat: 47.6062,
+            lon: -122.3321
+        },
+        {
+            name: "Ketchikan, Alaska",
+            arrive: "July 24, 8:00 AM",
+            depart: "July 24, 5:00 PM",
+            lat: 55.342222,
+            lon: -131.646111
+        },
+        {
+            name: "Sitka, Alaska",
+            arrive: "July 25, 8:00 AM",
+            depart: "July 25, 5:00 PM",
+            lat: 57.053055,
+            lon: -135.330000
+        },
+        {
+            name: "Endicott Arm & Dawes Glacier",
+            arrive: "July 26, 5:00 AM",
+            depart: "July 26, 10:00 AM",
+            lat: 57.655000,
+            lon: -133.027778
+        },
+        {
+            name: "Juneau, Alaska",
+            arrive: "July 26, 1:00 PM",
+            depart: "July 26, 8:00 PM",
+            lat: 58.301944,
+            lon: -134.419722
+        },
+        {
+            name: "Victoria, British Columbia",
+            arrive: "July 28, 5:00 PM",
+            depart: "July 28, 10:00 PM",
+            lat: 48.4222,
+            lon: -123.3700
+        }
+    ];
+
+    function calculateCenterPoint(ports) {
+        var totalLat = 0;
+        var totalLon = 0;
+        var count = ports.length;
+
+        ports.forEach(port => {
+            totalLat += port.lat;
+            totalLon += port.lon;
+        });
+
+        return [totalLat / count, totalLon / count];
+    }
+
+    function getLabelDimensions(content) {
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.visibility = 'hidden';
+        tempDiv.style.whiteSpace = 'nowrap';
+        tempDiv.className = 'marker-label';
+        tempDiv.innerHTML = content;
+        document.body.appendChild(tempDiv);
+        const dimensions = {
+            width: tempDiv.offsetWidth,
+            height: tempDiv.offsetHeight
+        };
+        document.body.removeChild(tempDiv);
+        return dimensions;
+    }
+
+    let centerPoint = calculateCenterPoint(portsOfCall);
+    const map = L.map('map').setView(centerPoint, 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Define water routes manually
+    const waterRoutes = [
+        [[47.6062, -122.3321], [48.0, -123.0], [55.342222, -131.646111]], // Seattle to Ketchikan
+        [[55.342222, -131.646111], [56.0, -133.0], [57.053055, -135.330000]], // Ketchikan to Sitka
+        [[57.053055, -135.330000], [57.5, -134.0], [57.655000, -133.027778]], // Sitka to Endicott Arm & Dawes Glacier
+        [[57.655000, -133.027778], [58.0, -134.0], [58.301944, -134.419722]], // Endicott Arm & Dawes Glacier to Juneau
+        [[58.301944, -134.419722], [56.0, -132.0], [55.0, -131.0], [48.4222, -123.3700]], // Juneau to Victoria
+        [[48.4222, -123.3700], [47.6062, -122.3321]] // Victoria to Seattle
+    ];
+
+    // Draw water routes
+    waterRoutes.forEach(route => {
+        L.polyline(route, {
+            color: 'blue',
+            weight: 2,
+            dashArray: '5, 5',
+            opacity: 0.8
+        }).addTo(map);
+    });
+
+    portsOfCall.forEach((port) => {
+        let labelContent = `<div class="marker-label">
+            <div class="port-name">${port.name}</div>
+            <div class="arrival-date">${port.arrive.split(',')[0]}</div>
+        </div>`;
+
+        const labelDimensions = getLabelDimensions(labelContent);
+
+        var label = L.divIcon({
+            html: labelContent,
+            className: '',
+            iconSize: [labelDimensions.width, labelDimensions.height],
+            iconAnchor: [labelDimensions.width / 2, labelDimensions.height / 2 + 25]
+        });
+
+        var marker = L.marker([port.lat, port.lon], {icon: label}).addTo(map);
+
+        var tooltipContent = `
+            <b>${port.name}</b><br>
+            Arrive: ${port.arrive}<br>
+            Depart: ${port.depart}
+        `;
+
+        marker.bindTooltip(tooltipContent, {
+            direction: 'bottom',
+            permanent: false,
+            sticky: true,
+            offset: [0, 0],
+            opacity: 0.9
+        });
+    });
+
+    var routeBounds = L.latLngBounds(waterRoutes.flat());
+    map.fitBounds(routeBounds);
+
+</script>
+</body>
+</html>
